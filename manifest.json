@@ -1,17 +1,20 @@
 {
+  "id": "/APP_POOL/",
   "name": "Salón de Pool Prat",
   "short_name": "Pool Prat",
-  "start_url": "./",
-  "scope": "./",
+  "description": "Sistema de control y cobro de mesas para Salón de Pool Prat",
+  "start_url": "https://cofremolinadiego.github.io/APP_POOL/",
+  "scope": "https://cofremolinadiego.github.io/APP_POOL/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "https://cofremolinadiego.github.io/APP_POOL/icon.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
