@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pool Prat">
+<title>SALÓN DE POOL PRAT - BLE</title>
+<link id="appIconLink" rel="icon" type="image/svg+xml">
+<link id="appleTouchIcon" rel="apple-touch-icon">
+<link id="manifestLink" rel="manifest">
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-active: #fef9c3;
+    --text-active: #0f172a;
+    --accent: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --blue: #0284c7;
+  }
+  * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+  body { margin: 0; background: var(--bg); color: #f8fafc; padding: 12px; }
+  .btn { border: none; border-radius: 10px; padding: 13px 16px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; transition: opacity 0.15s; display: inline-block; text-align: center; text-decoration: none; }
+  .btn:active { opacity: 0.8; }
+  .btn-green { background: var(--green); color: #052e16; }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-dark { background: #0f172a; color: #fff; border: 1px solid #334155; }
+  .btn-amber { background: var(--accent); color: #0f172a; }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-gray { background: #475569; color: #fff; }
+
+  .topbar { background: var(--card); border: 1px solid var(--accent); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+  .brand-header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+  .brand-logo { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; border: 1px solid var(--accent); background: #0f172a; }
+  .topbar h2 { margin: 0; color: var(--accent); font-size: 20px; text-align: center; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 10px; }
+  .badge { background: #0f172a; border: 1px solid #334155; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #38bdf8; }
+  .ble-bar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .ble-status { padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 800; text-align: center; background: #7f1d1d; color: #fecaca; border: 1px solid #ef4444; }
+  .ble-status.connected { background: #064e3b; color: #a7f3d0; border-color: #10b981; }
+  .nav-btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .nav-btns .btn { width: auto; padding: 9px 14px; font-size: 13px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; }
+  .mesa-card { background: var(--card); border: 2px solid #334155; border-radius: 14px; padding: 14px; }
+  .mesa-card.activa { background: var(--card-active); color: var(--text-active); border-color: var(--accent); }
+  .mesa-card.mantencion { opacity: 0.68; border-color: #64748b; }
+  .mesa-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .mesa-title { font-size: 20px; font-weight: 800; }
+  .pill { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; }
+  .pill-off { background: #334155; color: #cbd5e1; }
+  .pill-on { background: var(--red); color: #fff; }
+  .pill-mnt { background: #f59e0b; color: #0f172a; }
+  .sub-info { font-size: 12px; opacity: 0.85; margin-bottom: 10px; font-weight: 600; }
+  .timer-box { background: rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.15); border-radius: 10px; padding: 10px; text-align: center; font-size: 26px; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; }
+  .mesa-card:not(.activa) .timer-box { background: #0f172a; border-color: #334155; color: #f8fafc; }
+  .tarifas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .tarifa-box { border: 1px solid rgba(148,163,184,0.4); border-radius: 10px; padding: 8px; text-align: center; }
+  .tarifa-lbl { font-size: 12px; opacity: 0.8; }
+  .tarifa-val { font-size: 18px; font-weight: 800; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); z-index: 50; padding: 16px; overflow-y: auto; }
+  .modal-box { max-width: 460px; margin: 20px auto; background: var(--card); border: 2px solid var(--accent); border-radius: 16px; padding: 18px; }
+  .modal-box h3 { margin: 0 0 12px; color: var(--accent); }
+  .cfg-section { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+  .cfg-section h4 { margin: 0 0 8px; font-size: 14px; color: #38bdf8; }
+  .res-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 14px; }
+  .res-table th, .res-table td { padding: 8px 10px; border-bottom: 1px solid #334155; text-align: left; }
+  .res-table th { color: #94a3b8; font-size: 12px; }
+  .res-table td:last-child, .res-table th:last-child { text-align: right; font-weight: 700; }
+  .res-total-row td { border-top: 2px solid var(--accent); border-bottom: none; color: var(--accent); font-size: 16px; font-weight: 800; padding-top: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand-header">
+    <img id="imgBrandLogo" class="brand-logo" alt="Logo">
+    <h2>SALÓN DE POOL PRAT</h2>
+  </div>
+  <div class="badges">
+    <div class="badge" id="lblFecha">FECHA: --/--/----</div>
+    <div class="badge" id="lblHora">HORA: --:--:--</div>
+  </div>
+  <div class="ble-bar">
+    <div id="bleStatus" class="ble-status">BLUETOOTH DESCONECTADO (Datos 4G/5G Activos)</div>
+    <button id="btnConectarBLE" class="btn btn-blue" onclick="conectarBluetooth()">CONECTAR BLUETOOTH (SALON_POOL_PRAT_BLE)</button>
+  </div>
+  <div class="nav-btns">
+    <button class="btn btn-purple" onclick="abrirResumen()">Resumen</button>
+    <button class="btn btn-amber" onclick="abrirPersonalizar()">Logo / Instalar App</button>
+    <button id="btnInstalarPWA" class="btn btn-green hidden" onclick="instalarPWA()">Instalar en Inicio</button>
+  </div>
+</div>
+
+<div class="grid" id="gridMesas"></div>
+
+<!-- MODAL COBRO -->
+<div id="modalCobro" class="modal">
+  <div class="modal-box">
+    <h3 id="cobroTitulo">Cobrar Mesa</h3>
+    <p id="cobroDetalle" style="font-size:15px; line-height:1.5;"></p>
+    <div style="display:grid; gap:10px; margin-top:14px;">
+      <button class="btn btn-green" id="btnCobrarSocio">COBRAR TARIFA SOCIO</button>
+      <button class="btn btn-amber" id="btnCobrarPublico">COBRAR TARIFA PÚBLICO</button>
+      <button class="btn btn-gray" onclick="cerrarModales()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESUMEN DIARIO LOCAL -->
+<div id="modalResumen" class="modal">
+  <div class="modal-box">
+    <h3>Resumen de Cobros (Sesión App)</h3>
+    <div class="cfg-section">
+      <div id="resumenFechaLbl" style="font-size:12px; color:#94a3b8; margin-bottom:8px; font-weight:600;">Fecha: --/--/----</div>
+      <table class="res-table">
+        <thead>
+          <tr>
+            <th>Mesa</th>
+            <th>Cobros</th>
+            <th>Monto Recaudado</th>
+          </tr>
+        </thead>
+        <tbody id="resumenTbody"></tbody>
+      </table>
+    </div>
+    <div style="display:grid; gap:10px;">
+      <button class="btn btn-green" onclick="descargarCSVLocal()">DESCARGAR CSV DE TURNO</button>
+      <button class="btn btn-gray" onclick="cerrarModales()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LOGO PERSONALIZADO E INSTALACIÓN -->
+<div id="modalPersonalizar" class="modal">
+  <div class="modal-box">
+    <h3>Logo Personalizado e Instalación</h3>
+    <div class="cfg-section">
+      <h4>1. Cambiar Imagen / Logo de la App</h4>
+      <p style="font-size:13px; color:#cbd5e1; margin:0 0 10px;">Selecciona tu imagen personalizada desde la galería del teléfono para usarla como logo e ícono.</p>
+      <input type="file" id="inpLogoFile" accept="image/*" style="width:100%; color:#fff; font-size:14px;" onchange="cargarLogoPersonalizado(event)">
+    </div>
+    <div class="cfg-section">
+      <h4>2. Instalar como App en el Teléfono</h4>
+      <p style="font-size:13px; color:#cbd5e1; margin:0; line-height:1.45;">
+        • <b>Android (Chrome):</b> Toca los 3 puntos arriba a la derecha (⋮) y selecciona <b>"Añadir a pantalla de inicio"</b> o <b>"Instalar aplicación"</b>.<br>
+        • <b>Nota importante:</b> Web Bluetooth requiere abrir este archivo desde un enlace <b>HTTPS</b> (por ejemplo GitHub Pages / Netlify) o <b>localhost</b> para habilitar el permiso Bluetooth del navegador.
+      </p>
+    </div>
+    <button class="btn btn-gray" onclick="cerrarModales()">Cerrar</button>
+  </div>
+</div>
+
+<script>
+// --- UUIDS EXACTOS FIRMWARE v19 BLE ---
+const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+const CHAR_CMD_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+const CHAR_STAT_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a9";
+
+let bleDevice = null;
+let charCmd = null;
+let charStat = null;
+let deferredPrompt = null;
+
+// Estado local sincronizado con ESP32
+let stateData = {
+  fecha: "--/--/----",
+  hora: "--:--:--",
+  tSocio: 100,
+  tPub: 115,
+  mesas: Array.from({ length: 8 }, () => ({ act: false, mnt: false, seg: 0, hini: "--:--:--" }))
+};
+
+// Registro local de cobros del turno en la App
+let cobrosTurno = JSON.parse(localStorage.getItem("poolprat_cobros_turno") || "[]");
+
+// --- ICONO SVG POR DEFECTO (BOLA 8) + MANIFEST DINÁMICO PWA ---
+const DEFAULT_ICON_SVG = "data:image/svg+xml;utf8," + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="110" fill="#0f172a"/>
+    <circle cx="256" cy="256" r="190" fill="#111827" stroke="#f59e0b" stroke-width="18"/>
+    <circle cx="256" cy="256" r="82" fill="#f8fafc"/>
+    <text x="256" y="286" font-family="Arial,sans-serif" font-weight="bold" font-size="96" text-anchor="middle" fill="#0f172a">8</text>
+  </svg>`
+);
+
+function aplicarLogo(dataUrl) {
+  const src = dataUrl || DEFAULT_ICON_SVG;
+  document.getElementById("imgBrandLogo").src = src;
+  document.getElementById("appIconLink").href = src;
+  document.getElementById("appleTouchIcon").href = src;
+
+  const manifestObj = {
+    name: "Salón de Pool Prat",
+    short_name: "Pool Prat",
+    start_url: ".",
+    display: "standalone",
+    background_color: "#0f172a",
+    theme_color: "#0f172a",
+    icons: [{ src: src, sizes: "512x512", type: src.startsWith("data:image/png") ? "image/png" : "image/svg+xml" }]
+  };
+  const blob = new Blob([JSON.stringify(manifestObj)], { type: "application/manifest+json" });
+  document.getElementById("manifestLink").href = URL.createObjectURL(blob);
+}
+
+function cargarLogoPersonalizado(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    localStorage.setItem("poolprat_custom_logo", e.target.result);
+    aplicarLogo(e.target.result);
+    alert("Logo personalizado guardado correctamente.");
+  };
+  reader.readAsDataURL(file);
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById("btnInstalarPWA").classList.remove("hidden");
+});
+
+function instalarPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    document.getElementById("btnInstalarPWA").classList.add("hidden");
+  });
+}
+
+// --- CONEXIÓN BLUETOOTH LOW ENERGY (SIN PERDER DATOS MÓVILES) ---
+async function conectarBluetooth() {
+  if (!navigator.bluetooth) {
+    alert("Este navegador no soporta Web Bluetooth. Usa Google Chrome en Android abriendo esta app desde una URL HTTPS.");
+    return;
+  }
+  try {
+    actualizarEstadoUI(false, "BUSCANDO SALON_POOL_PRAT_BLE...");
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ name: "SALON_POOL_PRAT_BLE" }, { namePrefix: "SALON_POOL" }],
+      optionalServices: [SERVICE_UUID]
+    });
+
+    bleDevice.addEventListener("gattserverdisconnected", onDesconectadoBLE);
+    await enlazarGATT();
+  } catch (err) {
+    actualizarEstadoUI(false, "BLUETOOTH DESCONECTADO (Datos 4G/5G Activos)");
+  }
+}
+
+async function enlazarGATT() {
+  if (!bleDevice) return;
+  try {
+    const server = await bleDevice.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    charCmd = await service.getCharacteristic(CHAR_CMD_UUID);
+    charStat = await service.getCharacteristic(CHAR_STAT_UUID);
+
+    await charStat.startNotifications();
+    charStat.addEventListener("characteristicvaluechanged", onDatosRecibidosBLE);
+
+    actualizarEstadoUI(true, "CONECTADO POR BLUETOOTH (Datos 4G/5G Activos)");
+
+    // Sincronizar hora actual del teléfono con el ESP32
+    const epoch = Math.floor(Date.now() / 1000) - (new Date().getTimezoneOffset() * 60);
+    await enviarComandoBLE("SYNC:" + epoch);
+  } catch (err) {
+    actualizarEstadoUI(false, "REINTENTANDO CONEXIÓN BLUETOOTH...");
+  }
+}
+
+function onDesconectadoBLE() {
+  actualizarEstadoUI(false, "DESCONECTADO - RECONECTANDO...");
+  setTimeout(() => {
+    if (bleDevice && !bleDevice.gatt.connected) {
+      enlazarGATT();
+    }
+  }, 2000);
+}
+
+function actualizarEstadoUI(conectado, texto) {
+  const el = document.getElementById("bleStatus");
+  const btn = document.getElementById("btnConectarBLE");
+  el.textContent = texto;
+  if (conectado) {
+    el.classList.add("connected");
+    btn.textContent = "BLUETOOTH ENLAZADO OK";
+    btn.className = "btn btn-green";
+  } else {
+    el.classList.remove("connected");
+    btn.textContent = "CONECTAR BLUETOOTH (SALON_POOL_PRAT_BLE)";
+    btn.className = "btn btn-blue";
+  }
+}
+
+async function enviarComandoBLE(cmd) {
+  if (!charCmd || !bleDevice || !bleDevice.gatt.connected) {
+    alert("Primero presiona 'CONECTAR BLUETOOTH' para enlazar con el salón.");
+    return;
+  }
+  try {
+    const encoder = new TextEncoder();
+    await charCmd.writeValue(encoder.encode(cmd));
+  } catch (e) {
+    console.error("Error enviando comando BLE:", e);
+  }
+}
+
+// Procesa trama enviada por ESP32 v19 BLE
+function onDatosRecibidosBLE(event) {
+  const decoder = new TextDecoder("utf-8");
+  const raw = decoder.decode(event.target.value).trim();
+  if (!raw) return;
+
+  try {
+    if (raw.startsWith("{")) {
+      const parsed = JSON.parse(raw);
+      if (parsed.mesas) stateData = parsed;
+    } else if (raw.includes("|")) {
+      // Formato compacto: tSocio,tPub,fecha,hora|act,mnt,seg,hini|...
+      const partes = raw.split("|");
+      const meta = partes[0].split(",");
+      if (meta.length >= 4) {
+        stateData.tSocio = parseInt(meta[0], 10) || 100;
+        stateData.tPub = parseInt(meta[1], 10) || 115;
+        stateData.fecha = meta[2];
+        stateData.hora = meta[3];
+      }
+      for (let i = 1; i <= 8 && i < partes.length; i++) {
+        const m = partes[i].split(",");
+        if (m.length >= 4) {
+          stateData.mesas[i - 1] = {
+            act: m[0] === "1",
+            mnt: m[1] === "1",
+            seg: parseInt(m[2], 10) || 0,
+            hini: m[3]
+          };
+        }
+      }
+    }
+    renderMesas();
+  } catch (e) {
+    console.error("Error parseando trama BLE:", e);
+  }
+}
+
+// --- RENDERIZADO Y ACCIONES DE MESAS ---
+function formatTime(sec) {
+  const h = String(Math.floor(sec / 3600)).padStart(2, "0");
+  const m = String(Math.floor((sec % 3600) / 60)).padStart(2, "0");
+  const s = String(sec % 60).padStart(2, "0");
+  return h + ":" + m + ":" + s;
+}
+
+function formatCLP(val) {
+  return "$" + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function renderMesas() {
+  document.getElementById("lblFecha").textContent = "FECHA: " + stateData.fecha;
+  document.getElementById("lblHora").textContent = "HORA: " + stateData.hora;
+
+  const grid = document.getElementById("gridMesas");
+  let html = "";
+  stateData.mesas.forEach((m, i) => {
+    const mins = Math.floor(m.seg / 60);
+    const cSocio = mins * stateData.tSocio;
+    const cPub = mins * stateData.tPub;
+
+    let pillHtml = `<div class="pill ${m.act ? 'pill-on' : 'pill-off'}">${m.act ? 'EN USO' : 'DISPONIBLE'}</div>`;
+    if (m.mnt) pillHtml = `<div class="pill pill-mnt">MANTENCIÓN</div>`;
+
+    let actionBtn = m.act
+      ? `<button class="btn btn-red" onclick="accionMesa(${i}, false)">APAGAR</button>`
+      : `<button class="btn btn-green" onclick="accionMesa(${i}, true)">ENCENDER</button>`;
+
+    if (m.mnt) {
+      actionBtn = `<button class="btn btn-gray" disabled style="opacity:0.6;">BLOQUEADA</button>`;
+    }
+
+    html += `
+      <div class="mesa-card ${m.act ? 'activa' : ''} ${m.mnt ? 'mantencion' : ''}">
+        <div class="mesa-head">
+          <div class="mesa-title">Mesa ${i + 1}</div>
+          ${pillHtml}
+        </div>
+        <div class="sub-info">${m.mnt ? 'Mesa deshabilitada por mantención' : 'Inicio: ' + m.hini + ' | Cobrado: ' + mins + ' min'}</div>
+        <div class="timer-box">${formatTime(m.seg)}</div>
+        <div class="tarifas">
+          <div class="tarifa-box">
+            <div class="tarifa-lbl">Socio</div>
+            <div class="tarifa-val">${formatCLP(cSocio)}</div>
+          </div>
+          <div class="tarifa-box">
+            <div class="tarifa-lbl">Público</div>
+            <div class="tarifa-val">${formatCLP(cPub)}</div>
+          </div>
+        </div>
+        <div class="actions">
+          ${actionBtn}
+          <button class="btn btn-dark" onclick="abrirCobro(${i}, ${mins}, ${cSocio}, ${cPub})">COBRAR / 0</button>
+        </div>
+      </div>
+    `;
+  });
+  grid.innerHTML = html;
+}
+
+function accionMesa(idx, encender) {
+  const cmd = (encender ? "ON:" : "OFF:") + (idx + 1);
+  enviarComandoBLE(cmd);
+  // Actualización visual inmediata
+  stateData.mesas[idx].act = encender;
+  renderMesas();
+}
+
+function abrirCobro(idx, mins, cSocio, cPub) {
+  document.getElementById("cobroTitulo").textContent = "Cobrar y Reiniciar Mesa " + (idx + 1);
+  document.getElementById("cobroDetalle").innerHTML =
+    `Tiempo cobrable: <b>${mins} minutos enteros</b><br>` +
+    `• Tarifa Socio: <b>${formatCLP(cSocio)}</b><br>` +
+    `• Tarifa Público: <b>${formatCLP(cPub)}</b>`;
+
+  document.getElementById("btnCobrarSocio").onclick = () => confirmarCobro(idx, "Socio", mins, cSocio, "S");
+  document.getElementById("btnCobrarPublico").onclick = () => confirmarCobro(idx, "Publico", mins, cPub, "P");
+  document.getElementById("modalCobro").style.display = "block";
+}
+
+function confirmarCobro(idx, tipo, mins, total, codigoTarifa) {
+  enviarComandoBLE(`PAY:${idx + 1}:${codigoTarifa}`);
+  if (mins > 0) {
+    const ahora = new Date();
+    const fechaStr = String(ahora.getDate()).padStart(2, "0") + "/" + String(ahora.getMonth() + 1).padStart(2, "0") + "/" + ahora.getFullYear();
+    const horaStr = String(ahora.getHours()).padStart(2, "0") + ":" + String(ahora.getMinutes()).padStart(2, "0") + ":" + String(ahora.getSeconds()).padStart(2, "0");
+    cobrosTurno.push({ fecha: fechaStr, hora: horaStr, mesa: idx + 1, tipo, mins, total });
+    localStorage.setItem("poolprat_cobros_turno", JSON.stringify(cobrosTurno));
+  }
+  stateData.mesas[idx].act = false;
+  stateData.mesas[idx].seg = 0;
+  stateData.mesas[idx].hini = "--:--:--";
+  cerrarModales();
+  renderMesas();
+}
+
+function abrirResumen() {
+  const ahora = new Date();
+  const fechaHoy = stateData.fecha !== "--/--/----"
+    ? stateData.fecha
+    : String(ahora.getDate()).padStart(2, "0") + "/" + String(ahora.getMonth() + 1).padStart(2, "0") + "/" + ahora.getFullYear();
+
+  document.getElementById("resumenFechaLbl").textContent = "Fecha: " + fechaHoy;
+  const totales = [0, 0, 0, 0, 0, 0, 0, 0];
+  const conteos = [0, 0, 0, 0, 0, 0, 0, 0];
+
+  cobrosTurno.forEach(c => {
+    if (c.fecha === fechaHoy && c.mesa >= 1 && c.mesa <= 8) {
+      totales[c.mesa - 1] += c.total;
+      conteos[c.mesa - 1] += 1;
+    }
+  });
+
+  let html = "";
+  let granTotal = 0;
+  let totalCobros = 0;
+  for (let i = 0; i < 8; i++) {
+    granTotal += totales[i];
+    totalCobros += conteos[i];
+    html += `<tr><td>Mesa ${i + 1}</td><td>${conteos[i]}</td><td>${formatCLP(totales[i])}</td></tr>`;
+  }
+  html += `<tr class="res-total-row"><td>TOTAL DÍA</td><td>${totalCobros}</td><td>${formatCLP(granTotal)}</td></tr>`;
+  document.getElementById("resumenTbody").innerHTML = html;
+  document.getElementById("modalResumen").style.display = "block";
+}
+
+function descargarCSVLocal() {
+  let csv = "Fecha,Hora,Mesa,Tipo,Minutos,Total_CLP\n";
+  cobrosTurno.forEach(c => {
+    csv += `${c.fecha},${c.hora},Mesa ${c.mesa},${c.tipo},${c.mins},${c.total}\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "cobros_turno_pool_prat.csv";
+  a.click();
+}
+
+function abrirPersonalizar() {
+  document.getElementById("modalPersonalizar").style.display = "block";
+}
+
+function cerrarModales() {
+  document.getElementById("modalCobro").style.display = "none";
+  document.getElementById("modalResumen").style.display = "none";
+  document.getElementById("modalPersonalizar").style.display = "none";
+}
+
+// Reloj local fluido si está conectado
+setInterval(() => {
+  let cambio = false;
+  stateData.mesas.forEach(m => {
+    if (m.act) {
+      m.seg += 1;
+      cambio = true;
+    }
+  });
+  if (cambio) renderMesas();
+}, 1000);
+
+// Inicializar logo y tarjetas
+aplicarLogo(localStorage.getItem("poolprat_custom_logo"));
+renderMesas();
+</script>
+</body>
+</html>
